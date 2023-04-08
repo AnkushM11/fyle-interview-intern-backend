@@ -49,7 +49,8 @@ def test_submit_assignment_student_1(client, h_student_1):
         json={
             'id': 2,
             'teacher_id': 2
-        })
+        }
+    )
 
     assert response.status_code == 200
 

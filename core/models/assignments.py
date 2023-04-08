@@ -7,6 +7,7 @@ from core.models.students import Student
 from sqlalchemy.types import Enum as BaseEnum
 
 
+
 class GradeEnum(str, enum.Enum):
     A = 'A'
     B = 'B'
@@ -62,9 +63,18 @@ class Assignment(db.Model):
     @classmethod
     def submit(cls, _id, teacher_id, principal: Principal):
         assignment = Assignment.get_by_id(_id)
+
+        #Check if student exists
+        student = Student.get_student(principal.user_id)
+        assertions.assert_found(student, 'No student with this user id.')
+
         assertions.assert_found(assignment, 'No assignment with this id was found')
         assertions.assert_valid(assignment.student_id == principal.student_id, 'This assignment belongs to some other student')
         assertions.assert_valid(assignment.content is not None, 'assignment with empty content cannot be submitted')
+
+        # Only draft assignment can be submitted to teacher
+        # Checking if the state of assignment is in draft state else raise an error
+        assertions.assert_valid(assignment.state == AssignmentStateEnum.DRAFT, 'only a draft assignment can be submitted')
 
         assignment.teacher_id = teacher_id
         assignment.state = AssignmentStateEnum.SUBMITTED
@@ -72,6 +82,57 @@ class Assignment(db.Model):
 
         return assignment
 
+
     @classmethod
-    def get_assignments_by_student(cls, student_id):
-        return cls.filter(cls.student_id == student_id).all()
+    def get_assignments_by_student(cls, principal: Principal):
+        # Checking if the student exists
+        student = Student.get_student(principal.user_id)
+        assertions.assert_found(student, 'No student with this user id.')
+        return cls.filter(cls.student_id == principal.student_id).all()
+
+
+
+    # A classmethod to return all the assignments submitted to the teacher
+    # using the filter method to get all assignments corresponding to given teacher_id
+    @classmethod
+    def get_assignments_submitted_to_teacher(cls, principal: Principal):
+        # Checking if the teacher exists
+        teacher = Teacher.get_teacher(principal.user_id)
+        assertions.assert_found(teacher, 'No teacher with this user id.')
+        return cls.filter(cls.teacher_id == principal.teacher_id).all()
+
+
+
+    @classmethod
+    def grading(cls, _id, grade, principal: Principal):
+
+        # getting the assignent using id attribute
+        assignment = Assignment.get_by_id(_id)
+
+        # Check if teacher exists
+        teacher = Teacher.get_teacher(principal.user_id)
+        assertions.assert_found(teacher, 'No teacher with this user id.')
+
+        # Checking if the assignment is present in the database.
+        # Assignment should be valid
+        assertions.assert_found(assignment, 'No assignment with this id was found')
+
+        # Checking if the assignment was graded only by the teacher to whom it was submitted
+        # teacher_1 cannot grade assignments which were submitted to teacher_2
+        assertions.assert_valid(assignment.teacher_id == principal.teacher_id, 'This assignment was submitted to some other teacher.')
+
+        # Checking if the assignment state was SUBMITTED
+        # Only assignments in SUBMITTED state can be graded
+        assertions.assert_valid(assignment.state == AssignmentStateEnum.SUBMITTED, 'only a submitted assignment can be graded')
+
+        # Assigning the grade to the assignment
+        assignment.grade = grade
+
+        # Changing the assignment state to GRADED
+        assignment.state = AssignmentStateEnum.GRADED
+
+        db.session.flush()
+
+        return assignment
+
+

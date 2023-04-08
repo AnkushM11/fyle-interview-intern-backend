@@ -100,3 +100,48 @@ def test_grade_assignment_draft_assignment(client, h_teacher_1):
     data = response.json
 
     assert data['error'] == 'FyleError'
+
+
+# Test to check assignment graded by the teacher 2
+def test_grade_assignment_teacher_2(client, h_teacher_2):
+    """
+    Test to check the assignment graded by teacher.
+    """
+
+    # Making a post request to the /teacher/assignments/grade route
+    # headers = X-Principal: {"user_id":4, "teacher_id":2}
+    # payload : {"id":2, "grade":"A"}
+
+    response = client.post(
+        '/teacher/assignments/grade',
+        headers=h_teacher_2
+        , json={
+            "id": 2,
+            "grade": "A"
+        }
+    )
+
+    # status code should be 200
+    assert response.status_code == 200
+
+    # checking for correctness of output
+    data = response.json['data']
+
+    # teacher_id should be 2 as assignment was submitted to teacher 2
+    assert data['teacher_id'] == 2
+
+    # assignment status should be GRADED
+    assert data['state'] == 'GRADED'
+
+    # grade of the assignment should be A
+    assert data['grade'] == 'A'
+
+def test_no_header_assignment(client, h_teacher_1):
+    """
+    Failure case: No header
+    """
+    response = client.get(
+        '/teacher/assignments'
+    )
+
+    assert response.status_code == 401

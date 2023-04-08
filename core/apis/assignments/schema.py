@@ -36,3 +36,20 @@ class AssignmentSubmitSchema(Schema):
     def initiate_class(self, data_dict, many, partial):
         # pylint: disable=unused-argument,no-self-use
         return GeneralObject(**data_dict)
+
+
+## AssignmentGradingSchema for the loading the incoming payload
+class AssignmentGradingSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    # id field for assignment id
+    id = fields.Integer(required=True, allow_none=False)
+
+    # grade field for grade of assignment
+    grade = EnumField(GradeEnum,required=True, allow_none=False)
+
+    @post_load
+    def initiate_class(self, data_dict, many, partial):
+        # pylint: disable=unused-argument,no-self-use
+        return GeneralObject(**data_dict)
