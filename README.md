@@ -1,10 +1,10 @@
 ## Test coverage report
 
-![Screenshot](./fyle_ss_coverage_test.png)
+![Screenshot](./fyle_ss_coverage_test.jpg)
 
 ## Tests passed ss
 
-![Screenshot](./fyle_tests_passed.png)
+![Screenshot](./fyle_tests_passed.jpg)
 
 # Fyle Backend Challenge
 
